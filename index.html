@@ -1,0 +1,177 @@
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <title>Guess the Game with Emojis</title>
+</head>
+
+<body id="body">
+    <div class="container">
+        <div class="row">
+            <div class="col-6 col-md-2"></div>
+            <div class="col-6 col-md-8">
+                <div id="game-content">
+                    <h1>Guess the Game with Emojis</h1>
+                    <br>
+                    <h1>
+                        <div id="emojis"></div>
+                    </h1>
+                    <br>
+                    <form id="submit-game" action="http://localhost:8080/submit-game" method="get">
+                        <input type="hidden" id="gameId" name="gameId">
+                        <input type="text" class="form-control" id="submittedGameName" name="submittedGameName" placeholder="Search for a game..." oninput="handleInput()"
+                            required>
+                        <button type="submit" class="btn btn-primary" id="submit-button">Submit</button>
+                        <div id="suggestions"></div>
+                    </form>
+                    <div id="result">
+                        <h2 id="result-message"></h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-2"></div>
+        </div>
+    </div>
+
+    <script>
+        // API'ya istek gönderen fonksiyon
+        function getDataFromAPI() {
+            // API'nin URL'si
+            const apiUrl = 'http://localhost:8080/get-random-hint';
+
+            // Fetch API kullanarak GET isteği gönder
+            fetch(apiUrl)
+                .then(response => {
+                    // İsteğin başarılı olup olmadığını kontrol et
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    // JSON verisini al ve döndür
+                    return response.json();
+                })
+                .then(data => {
+                    // API'den gelen veriyi HTML'e ekle
+                    document.getElementById('emojis').innerHTML = data.emojis;
+                    document.getElementById('gameId').value = data.id;
+                })
+                .catch(error => {
+                    // Hata durumunda hata mesajını göster
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+        document.getElementById('submit-game').addEventListener('submit', function (event) {
+
+            event.preventDefault();
+
+            // Formdaki input alanından veriyi al
+            const formData = new FormData(event.target);
+            const submittedGameName = formData.get('submittedGameName');
+            const gameId = formData.get('gameId');
+
+            // Oluşan GET URL'sini al
+            const getUrl = event.target.action + '?gameId=' + encodeURIComponent(gameId) + '&submittedGameName=' + encodeURIComponent(submittedGameName);
+
+
+            // Fetch API kullanarak GET isteği gönder
+            fetch(getUrl)
+                .then(response => {
+                    // İsteğin başarılı olup olmadığını kontrol et
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    // JSON verisini al ve döndür
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.isCorrect) {
+                        document.getElementById('result-message').innerHTML = "Tebrikler. Doğru bildiniz."
+                    }
+                    else {
+                        document.getElementById('result-message').innerHTML = "Yanlış cevap. Tekrar deneyin."
+                    }
+                })
+                .catch(error => {
+                    // Hata durumunda hata mesajını göster
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        });
+
+        function handleInput() {
+            var input = document.getElementById('submittedGameName').value;
+            if (input.length >= 3) {
+                /*var xhr = new XMLHttpRequest();
+                xhr.open('GET', '/autocomplete?query=' + input, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            var suggestions = JSON.parse(xhr.responseText);
+                            showSuggestions(suggestions);
+                        } else {
+                            console.error('Sunucudan veri alınamadı.');
+                        }
+                    }
+                };
+                xhr.send();*/
+                const apiUrl = 'http://localhost:8080/auto-complete?q=' + encodeURIComponent(input);
+
+
+
+                // Fetch API kullanarak GET isteği gönder
+                fetch(apiUrl)
+                    .then(response => {
+                        // İsteğin başarılı olup olmadığını kontrol et
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        // JSON verisini al ve döndür
+                        return response.json();
+                    })
+                    .then(data => {
+                        // API'den gelen veriyi HTML'e ekle
+                        showSuggestions(data);
+                    })
+                    .catch(error => {
+                        // Hata durumunda hata mesajını göster
+                        console.error('There was a problem with the fetch operation:', error);
+                    });
+            } else {
+                clearSuggestions();
+            }
+        }
+
+        function showSuggestions(suggestions) {
+            var suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = ''; // Önceki önerileri temizle
+            suggestions.forEach(function (suggestion) {
+                var suggestionElement = document.createElement('div');
+                suggestionElement.textContent = suggestion;
+                suggestionsDiv.appendChild(suggestionElement);
+            });
+        }
+
+        function clearSuggestions() {
+            var suggestionsDiv = document.getElementById('suggestions');
+            suggestionsDiv.innerHTML = ''; // Önerileri temizle
+        }
+
+
+        // Sayfa yüklendiğinde API isteği gönder
+        window.onload = getDataFromAPI;
+    </script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>

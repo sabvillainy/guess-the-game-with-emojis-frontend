@@ -1,0 +1,39 @@
+#body{
+    margin: 0;
+    padding: 0;
+    background-color: #b2dfdb
+}
+#game-content{
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 220px;
+    color:black;
+}
+#submit-game{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+}
+#submittedGameName{
+}
+#submit-button{
+    margin-top: 15px;
+}
+#game-content h1{
+    display: flex;
+    justify-content: center;
+}
+#emojis {
+    display: flex;
+    justify-content: center;
+}
+#submit-game{
+    display: flex;
+    justify-content: center;
+}
+#result{
+    display: flex;
+    justify-content: center;
+}
